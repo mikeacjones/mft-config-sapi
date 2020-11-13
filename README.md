@@ -4,7 +4,7 @@ The system API is used for configuring entries leveraged by MFT Agents to proces
 
 Currently, only an SFTP agent has been configured: https://github.com/mikeacjones/mft-sftp-agent
 
-This application shoudl be setup first as agents are dependent.
+This System API should be setup first as agents are dependent.
 
 # Setup
 1. Spin up a MongoDB in SE Platform
