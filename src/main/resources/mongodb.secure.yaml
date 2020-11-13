@@ -1,0 +1,7 @@
+mongodb:
+  host: "eksprod.tools.mulesoft.com"
+  username: "![lGjQ5yaf1TVIrapFN28XlA==]"
+  password: "![TIe3MsCQPvGGKeWRByZIRA==]"
+  port: "31480"
+  database: "mft-config"
+  collection: "customers"

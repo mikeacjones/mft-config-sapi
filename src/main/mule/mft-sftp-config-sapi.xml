@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd  http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+    <http:listener-config name="mft-sftp-config-sapi-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="8081" />
+    </http:listener-config>
+    <apikit:config name="mft-sftp-config-sapi-config" api="resource::26f6e505-7827-46b7-b3bf-95f995a95ab5:mft-sftp-config-sapi:1.0.2:raml:zip:mft-sftp-config-sapi.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <flow name="mft-sftp-config-sapi-main">
+        <http:listener config-ref="mft-sftp-config-sapi-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="mft-sftp-config-sapi-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="mft-sftp-config-sapi-console">
+        <http:listener config-ref="mft-sftp-config-sapi-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="mft-sftp-config-sapi-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="get:\configs:mft-sftp-config-sapi-config">
+		<mongo:find-documents collectionName="customers" doc:name="Find documents" doc:id="ba43e1ce-2089-4813-ac8e-0637c00dda0a" config-ref="MongoDB_Config">
+            <mongo:condition-query><![CDATA[#[output application/json --- {}]]]></mongo:condition-query>
+        </mongo:find-documents>
+        <ee:transform doc:name="Transform Message" doc:id="afe33134-e507-408c-ac7e-e29ef62727bb">
+            <ee:message>
+                <ee:set-payload><![CDATA[output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	sftpCredentials: {
+		password: payload01.sftpCredentials.password default "",
+		username: payload01.sftpCredentials.username default ""
+	},
+	inbound: {
+		filePattern: payload01.inbound.filePattern default "",
+		archive: payload01.inbound.archive default "",
+		localDestination: payload01.inbound.localDestination default ""
+	},
+	outbound: {
+		filePattern: payload01.outbound.filePattern default "",
+		remoteDestination: payload01.outbound.remoteDestination default "",
+		archive: payload01.outbound.archive default ""
+	},
+	customer: payload01.customer default "",
+	id: payload01["_id"] default ""
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="get:\configs\(id):mft-sftp-config-sapi-config">
+        <mongo:find-one-document collectionName="customers" doc:name="Find one document" doc:id="af4117f8-61ff-4bdc-ba35-7dd784e70514" config-ref="MongoDB_Config">
+            <mongo:find-query><![CDATA[#[output application/json
+---
+{
+	"_id": {
+		"\$oid": attributes.uriParams.id
+	}
+}]]]></mongo:find-query>
+        </mongo:find-one-document>
+        <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[output application/json
+---
+{
+	sftpCredentials: {
+		password: payload.sftpCredentials.password default "",
+		username: payload.sftpCredentials.username default ""
+	},
+	inbound: {
+		filePattern: payload.inbound.filePattern default "",
+		archive: payload.inbound.archive default "",
+		localDestination: payload.inbound.localDestination default ""
+	},
+	outbound: {
+		filePattern: payload.outbound.filePattern default "",
+		remoteDestination: payload.outbound.remoteDestination default "",
+		archive: payload.outbound.archive default ""
+	},
+	customer: payload.customer default "",
+	id: payload["_id"]["\$oid"] default ""
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <error-handler>
+            <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="e2a24d5c-b7e3-4fd0-83a3-2b1714427e62">
+                <set-variable value="404" doc:name="Set Variable" doc:id="8f6e5daa-6f48-43cc-a045-b342e862190c" variableName="httpStatus" />
+                <set-payload value="#[output application/json --- { message: &quot;Resource not found&quot; }]" doc:name="Set Payload" doc:id="769b370b-80a9-4f32-821e-9d789e2a42c2" />
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="post:\configs:application\json:mft-sftp-config-sapi-config">
+        <mongo:insert-document collectionName="customers" doc:name="Insert document" doc:id="4d20eb81-3d80-41c8-8f50-8ed5a88075b2" config-ref="MongoDB_Config" />
+        <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  id: payload
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="delete:\configs\(id):mft-sftp-config-sapi-config">
+        <mongo:find-one-document doc:name="Find one document" doc:id="d9d183fc-71f9-403d-a544-31efb5603119" config-ref="MongoDB_Config" collectionName="customers" target="doesExist">
+            <mongo:find-query><![CDATA[#[output application/json
+---
+{
+	"_id": {
+		"\$oid": attributes.uriParams.id
+	}
+}]]]></mongo:find-query>
+        </mongo:find-one-document>
+        <mongo:remove-documents doc:name="Remove documents" doc:id="ed82318e-3c26-41fb-b67d-f17103c5e694" config-ref="MongoDB_Config" collectionName="customers">
+            <mongo:find-query><![CDATA[#[output application/json
+---
+{
+	"_id": {
+		"\$oid": attributes.uriParams.id
+	}
+}]]]></mongo:find-query>
+        </mongo:remove-documents>
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="id">attributes.uriParams.'id'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "Config deleted"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <error-handler>
+            <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="124f4cb0-37a6-49a3-b731-b43708bb66be">
+                <set-variable value="404" doc:name="Set Variable" doc:id="d5e345da-32e8-494c-907c-58dcc972247b" variableName="httpStatus" />
+                <set-payload value="#[output application/json --- { message: &quot;Resource not found&quot; }]" doc:name="Set Payload" doc:id="3f8b22cd-9370-4c77-af8f-1960787bb4f3" />
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="put:\configs\(id):application\json:mft-sftp-config-sapi-config">
+		<mongo:find-one-and-update-document doc:name="Find one and update document" doc:id="429c069f-c80e-4fab-9402-c87a4cf68172" config-ref="MongoDB_Config" collectionName="customers">
+			<mongo:find-query ><![CDATA[#[output application/json
+---
+{
+	"_id": {
+		"\$oid": attributes.uriParams.id
+	}
+}]]]></mongo:find-query>
+			<mongo:content-to-update ><![CDATA[#[output application/json
+---
+(payload - "id")]]]></mongo:content-to-update>
+		</mongo:find-one-and-update-document>
+		<set-payload value="#[null]" doc:name="Set Payload" doc:id="996c8c7d-ea6d-49a8-8bc6-0e94bcc5f182" />
+		<set-variable value="204" doc:name="Set Variable" doc:id="0b5a40b6-0084-4c20-be91-6792a5feeb87" variableName="httpStatus"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="6a9808fc-7fb5-4cb2-811c-4ac1fd24d6c8" >
+				<set-payload value='#[output application/json --- { message: "Resource not found" }]' doc:name="Set Payload" doc:id="fc1f543a-070a-4b2d-a1fb-1b02ce643ae8" />
+				<set-variable value="404" doc:name="Set Variable" doc:id="62984d88-3c52-44f2-bceb-06cbec9a94c9" variableName="httpStatus"/>
+			</on-error-propagate>
+		</error-handler>
+    </flow>
+</mule>
